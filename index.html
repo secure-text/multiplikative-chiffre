@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Multiplikative Chiffre</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ff99;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    textarea {
+      height: 100px;
+    }
+
+    button {
+      background: #00ff99;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .output {
+      background: #222;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>🔐 Multiplikative Chiffre</h1>
+
+  <label for="text">Text (nur Buchstaben A-Z):</label>
+  <textarea id="text" placeholder="Gib hier deinen Text ein (nur Buchstaben A-Z)..."></textarea>
+
+  <label for="key">Schlüssel (Zahl teilerfremd zu 26):</label>
+  <input type="number" id="key" placeholder="z. B. 5">
+
+  <button onclick="encrypt()">Verschlüsseln</button>
+  <button onclick="decrypt()">Entschlüsseln</button>
+
+  <div class="output" id="output"></div>
+
+  <script>
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    function gcd(a, b) {
+      return b === 0 ? a : gcd(b, a % b);
+    }
+
+    function modInverse(a, m) {
+      for (let x = 1; x < m; x++) {
+        if ((a * x) % m === 1) return x;
+      }
+      return null;
+    }
+
+    function isCoprime(a, b) {
+      return gcd(a, b) === 1;
+    }
+
+    function prepareText(text) {
+      return text.toUpperCase().replace(/[^A-Z]/g, '');
+    }
+
+    function encrypt() {
+      const text = prepareText(document.getElementById('text').value);
+      const key = parseInt(document.getElementById('key').value);
+      const output = document.getElementById('output');
+
+      if (!isCoprime(key, 26)) {
+        output.innerHTML = "<span class='error'>❌ Ungültiger Schlüssel! Er muss teilerfremd zu 26 sein.</span>";
+        return;
+      }
+
+      let result = "";
+      for (let char of text) {
+        const x = alphabet.indexOf(char);
+        const y = (x * key) % 26;
+        result += alphabet[y];
+      }
+
+      output.textContent = `🔒 Verschlüsselter Text:\n${result}`;
+    }
+
+    function decrypt() {
+      const text = prepareText(document.getElementById('text').value);
+      const key = parseInt(document.getElementById('key').value);
+      const output = document.getElementById('output');
+
+      if (!isCoprime(key, 26)) {
+        output.innerHTML = "<span class='error'>❌ Ungültiger Schlüssel! Er muss teilerfremd zu 26 sein.</span>";
+        return;
+      }
+
+      const inverse = modInverse(key, 26);
+      if (!inverse) {
+        output.innerHTML = "<span class='error'>❌ Kein multiplikatives Inverses gefunden.</span>";
+        return;
+      }
+
+      let result = "";
+      for (let char of text) {
+        const y = alphabet.indexOf(char);
+        const x = (y * inverse) % 26;
+        result += alphabet[(x + 26) % 26]; // (+26) to handle negative mods
+      }
+
+      output.textContent = `🔓 Entschlüsselter Text:\n${result}`;
+    }
+  </script>
+</body>
+</html>
