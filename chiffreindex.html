@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔐 Multiplikative Chiffre</title>
+<style>
+  body{
+    margin:0;
+    padding:0;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background:#1b1b1b;
+    color:#e0e0e0;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:100vh;
+  }
+  .container{
+    width:95%;
+    max-width:800px;
+    margin-top:40px;
+    padding:40px;
+    background:#2c2c2c;
+    border-radius:25px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.7);
+  }
+  h1{
+    font-size:36px;
+    margin-bottom:30px;
+    color:#70c1b3;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-shadow:1px 1px 5px rgba(0,0,0,0.5);
+  }
+  label{
+    display:block;
+    margin-top:15px;
+    font-size:15px;
+    color:#e0e0e0;
+  }
+  select, textarea, button{
+    width:100%;
+    padding:15px;
+    border-radius:12px;
+    border:none;
+    font-size:16px;
+    margin-top:8px;
+    box-sizing:border-box;
+    transition:all 0.3s ease;
+  }
+  select, textarea{
+    background:#3a3a3a;
+    color:#e0e0e0;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+  }
+  textarea{
+    resize:vertical;
+    min-height:140px;
+  }
+  button{
+    cursor:pointer;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.3);
+    background:#505050;
+    color:#e0e0e0;
+  }
+  button:hover{
+    transform:scale(1.03);
+    background:#686868;
+  }
+  .explanation{
+    display:none;
+    margin-top:25px;
+    padding:25px;
+    border-radius:20px;
+    background:#505050;
+    color:#e0e0e0;
+    line-height:1.7;
+    border:1px solid rgba(0,0,0,0.2);
+  }
+  .footer{
+    margin-top:25px;
+    font-size:13px;
+    color:#e0e0e0;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔐 Multiplikative Chiffre</h1>
+
+  <div style="display:flex;flex-direction:column;gap:22px;">
+    <div style="display:flex;flex-direction:column;">
+      <label for="key">Schlüssel (wähle einen)</label>
+      <select id="key"></select>
+    </div>
+
+    <div style="display:flex;flex-direction:column;">
+      <label for="plaintext">Klartext</label>
+      <textarea id="plaintext" placeholder="Gib hier deinen Klartext ein..."></textarea>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <button onclick="encryptText()">Verschlüsseln</button>
+      <button onclick="decryptText()">Entschlüsseln</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;">
+      <label for="ciphertext">Verschlüsselter Text</label>
+      <textarea id="ciphertext" placeholder="Hier erscheint der verschlüsselte Text..."></textarea>
+    </div>
+
+    <div>
+      <button onclick="toggleExplanation()">Erklärung anzeigen / verbergen</button>
+      <div class="explanation" id="explanation">
+        <h3>Ausführliche Erklärung</h3>
+        <p>Die multiplikative Chiffre ist eine klassische Verschlüsselungsmethode. Jeder Buchstabe des Alphabets wird in eine Zahl von 0 bis 25 umgewandelt (A=0, B=1, C=2, ...).</p>
+        <p>Zur Verschlüsselung wird diese Zahl mit einem festen Schlüssel <strong>k</strong> multipliziert und das Ergebnis modulo 26 genommen.</p>
+        <p><strong>Beispiel verständlich erklärt:</strong> Angenommen, der Schlüssel ist k=5:</p>
+        <ul>
+          <li>Buchstabe A → Zahl 0 → (0*5) % 26 = 0 → zurück zu Buchstabe A</li>
+          <li>Buchstabe B → Zahl 1 → (1*5) % 26 = 5 → zurück zu Buchstabe F</li>
+          <li>Buchstabe C → Zahl 2 → (2*5) % 26 = 10 → zurück zu Buchstabe K</li>
+        </ul>
+        <p>Zum Entschlüsseln benötigt man die Inverse des Schlüssels modulo 26. Nur wenn der Schlüssel und 26 teilerfremd sind, existiert diese Inverse. Mit dieser Inverse multiplizieren wir die Chiffrewerte modulo 26, um den Klartext zurückzubekommen.</p>
+        <p>Diese Methode ist gut zum Lernen geeignet, aber nicht für moderne Sicherheitsanforderungen.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">made by secure-text</div>
+</div>
+<script>
+const ALPHABET="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const MOD=26;
+const keySelect=document.getElementById('key');
+[1,3,5,7,9,11,15,17,19,21,23,25].forEach(k=>{const option=document.createElement('option');option.value=k;option.text=k;keySelect.appendChild(option);});
+keySelect.value=5;
+function egcd(a,b){if(b===0)return {g:a,x:1,y:0};const r=egcd(b,a%b);return {g:r.g,x:r.y,y:r.x-Math.floor(a/b)*r.y};}
+function modInverse(a,m){const r=egcd((a%m+m)%m,m);return r.g!==1?null:(r.x+m)%m;}
+function isCoprime(a,m){a=Math.abs(a);while(m){let t=a%m;a=m;m=t;}return a===1;}
+function mapCharEncrypt(ch,key){const u=ch.toUpperCase();const i=ALPHABET.indexOf(u);if(i===-1)return ch;const out=ALPHABET[(i*key)%MOD];return ch===ch.toLowerCase()?out.toLowerCase():out;}
+function mapCharDecrypt(ch,invKey){const u=ch.toUpperCase();const i=ALPHABET.indexOf(u);if(i===-1)return ch;const out=ALPHABET[(i*invKey)%MOD];return ch===ch.toLowerCase()?out.toLowerCase():out;}
+function encrypt(text,key){return Array.from(text).map(c=>mapCharEncrypt(c,key)).join('');}
+function decrypt(text,key){const inv=modInverse(key,MOD);if(inv===null){alert('Keine Inverse für Schlüssel!');return text;}return Array.from(text).map(c=>mapCharDecrypt(c,inv)).join('');}
+function encryptText(){const text=document.getElementById('plaintext').value;const key=Number(document.getElementById('key').value);if(!isCoprime(key,MOD)){alert('Schlüssel nicht teilerfremd zu 26!');return;}document.getElementById('ciphertext').value=encrypt(text,key);}
+function decryptText(){const text=document.getElementById('ciphertext').value;const key=Number(document.getElementById('key').value);if(!isCoprime(key,MOD)){alert('Schlüssel nicht teilerfremd zu 26!');return;}document.getElementById('plaintext').value=decrypt(text,key);}
+function toggleExplanation(){const el=document.getElementById('explanation');el.style.display=(el.style.display==='none'||el.style.display==='')?'block':'none';window.scrollTo({top:el.offsetTop-40,behavior:'smooth'});}
+</script>
+</body>
+</html>
+
+  
